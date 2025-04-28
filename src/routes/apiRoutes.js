@@ -28,7 +28,11 @@ router.delete("/reserva/:id_reserva", controllerReserva.deleteReserva);
 // Nova rota para verificar a agenda de uma sala específica
 router.post("/sala/agenda", controllerReserva.viewReservaSala);
 
+router.get("/quantidadeusuario/:id_usuario", controllerReserva.viewReservasPorUsuario);
+
 // http://10.89.240.73:3000/api/
+
+// http://localhost:3000/api/quantidadeusuario/4
 
 module.exports = router;
 

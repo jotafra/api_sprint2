@@ -194,6 +194,7 @@ module.exports = class ControllerReserva {
     }
   
     try {
+      // Call the stored procedure to get room schedule
       const query = `CALL sp_get_sala_reservada(?, ?)`;
       console.log("Executando query:", query);
       console.log("Parâmetros:", [id_sala, data]);
@@ -221,6 +222,30 @@ module.exports = class ControllerReserva {
       return res.status(500).json({ error: "Erro interno do servidor", detalhes: error.message });
     }
   }
+
+    static async viewReservasPorUsuario(req, res) {
+      const { id_usuario } = req.params;
+    
+      if (!id_usuario) {
+        return res.status(400).json({ error: "Parâmetro id_usuario é obrigatório." });
+      }
+    
+      try {
+        const query = `SELECT fn_quantidade_reservas_usuario(?) AS quantidade`;
+        const results = await queryAsync(query, [id_usuario]);
+    
+        const quantidade = results[0].quantidade || 0;
+    
+        return res.status(200).json({
+          message: "Quantidade de reservas do usuário obtida com sucesso",
+          id_usuario,
+          quantidade_reservas: quantidade
+        });
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Erro ao buscar quantidade de reservas do usuário" });
+      }
+    }
   
 };
 
