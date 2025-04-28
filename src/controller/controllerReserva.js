@@ -176,6 +176,7 @@ module.exports = class ControllerReserva {
 
   static async viewReservaSala(req, res) {
     const { id_sala, data } = req.body;
+    console.log("Dados recebidos:", { id_sala, data });
     
     // Validate parameters
     if (!id_sala || !data) {
@@ -193,12 +194,13 @@ module.exports = class ControllerReserva {
     }
   
     try {
-      // Call the stored procedure to get room schedule
-      const query = `CALL sp_get_room_schedule(?, ?)`;
+      const query = `CALL sp_get_sala_reservada(?, ?)`;
+      console.log("Executando query:", query);
+      console.log("Parâmetros:", [id_sala, data]);
       
       const results = await queryAsync(query, [id_sala, data]);
+      console.log("Resultados obtidos:", results);
       
-      // The stored procedure returns two result sets: reserved sala and available sala
       const salareservada = results[0];
       const salasemreserva = results[1];
       
@@ -216,11 +218,25 @@ module.exports = class ControllerReserva {
       });
     } catch (error) {
       console.error("Erro ao buscar agenda da sala:", error);
-      return res.status(500).json({ error: "Erro interno do servidor" });
+      return res.status(500).json({ error: "Erro interno do servidor", detalhes: error.message });
     }
   }
   
 };
 
+function reservaFormat(reserva) {
+  if (reserva.data instanceof Date) {
+    reserva.data = reserva.data.toISOString().split("T")[0];
+  }
 
+  if (reserva.horarioInicio instanceof Date) {
+    reserva.horarioInicio = reserva.horarioInicio.toISOString().split("T")[1].split(".")[0];
+  }
+
+  if (reserva.horarioFim instanceof Date) {
+    reserva.horarioFim = reserva.horarioFim.toISOString().split("T")[1].split(".")[0];
+  }
+
+  return reserva;
+}
 
