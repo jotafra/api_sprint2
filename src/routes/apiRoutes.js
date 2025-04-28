@@ -1,7 +1,7 @@
 const router = require("express").Router();
 
 const userController = require("../controller/userController");
-const classroomController = require("../controller/reservasdisponiveis");
+const classroomController = require("../controller/classroomController");
 const controllerReserva = require("../controller/controllerReserva");
 
 //User
@@ -25,9 +25,9 @@ router.get("/reserva/", controllerReserva.getReservas);
 router.put("/reserva/:id", controllerReserva.updateReserva);
 router.delete("/reserva/:id_reserva", controllerReserva.deleteReserva);
 
-// Route to see the disponible rooms 
-router.get("/disponivel/", classroomController.reservasdisponiveis);
+// Nova rota para verificar a agenda de uma sala específica
+router.post("/sala/agenda", controllerReserva.viewReservaSala);
 
-// http://10.89.240.95:5000/api/
+// http://10.89.240.73:3000/api/
 
 module.exports = router;

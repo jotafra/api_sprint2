@@ -174,17 +174,17 @@ module.exports = class ControllerReserva {
     }
   }
 
-  static async getAvailableRooms(req, res) {
-    const { data, horarioInicio, horarioFim } = req.body;
+  static async viewReservaSala(req, res) {
+    const { id_sala, data } = req.body;
     
-    // Validação dos parâmetros
-    if (!data || !horarioInicio || !horarioFim) {
+    // Validate parameters
+    if (!id_sala || !data) {
       return res.status(400).json({ 
-        error: "Parâmetros incompletos. Informe data, horarioInicio e horarioFim" 
+        error: "Parâmetros incompletos. Informe id_sala e data" 
       });
     }
   
-    // Validação de formato da data (YYYY-MM-DD)
+    // Validate date format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(data)) {
       return res.status(400).json({ 
@@ -192,61 +192,35 @@ module.exports = class ControllerReserva {
       });
     }
   
-    // Validação de formato de horário (HH:MM:SS)
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
-    if (!timeRegex.test(horarioInicio) || !timeRegex.test(horarioFim)) {
-      return res.status(400).json({ 
-        error: "Formato de horário inválido. Use o formato HH:MM:SS" 
-      });
-    }
-  
-    // Validação de lógica de horários
-    if (horarioInicio >= horarioFim) {
-      return res.status(400).json({ 
-        error: "O horário de início deve ser anterior ao horário de fim" 
-      });
-    }
-  
     try {
-      // Chamar a stored procedure para obter salas disponíveis
-      const query = `CALL sp_get_available_rooms(?, ?, ?)`;
+      // Call the stored procedure to get room schedule
+      const query = `CALL sp_get_room_schedule(?, ?)`;
       
-      const results = await queryAsync(query, [data, horarioInicio, horarioFim]);
+      const results = await queryAsync(query, [id_sala, data]);
       
-      // A stored procedure retorna um array de resultados, o primeiro item contém as salas disponíveis
-      const salasDisponiveis = results[0];
+      // The stored procedure returns two result sets: reserved sala and available sala
+      const salareservada = results[0];
+      const salasemreserva = results[1];
       
       return res.status(200).json({ 
-        message: "Salas disponíveis encontradas",
+        message: "Agenda da sala recuperada com sucesso",
+        sala_id: id_sala,
         data: data,
-        horarioInicio: horarioInicio,
-        horarioFim: horarioFim, 
-        salas: salasDisponiveis 
+        horarios_reservados: salareservada.map(sala => ({
+          id_reserva: sala.id_reserva,
+          usuario: sala.nomeUsuario,
+          inicio: sala.horarioInicio,
+          fim: sala.horarioFim
+        })),
+        horarios_disponiveis: salasemreserva
       });
     } catch (error) {
-      console.error("Erro ao buscar salas disponíveis:", error);
+      console.error("Erro ao buscar agenda da sala:", error);
       return res.status(500).json({ error: "Erro interno do servidor" });
     }
   }
   
 };
 
-
-// Função para formatar reserva no fuso horário correto (UTC-3)
-function reservaFormat(reserva) {
-  if (reserva.data instanceof Date) {
-    reserva.data = reserva.data.toISOString().split("T")[0];
-  }
-
-  if (reserva.horarioInicio instanceof Date) {
-    reserva.horarioInicio = reserva.horarioInicio.toISOString().split("T")[1].split(".")[0];
-  }
-
-  if (reserva.horarioFim instanceof Date) {
-    reserva.horarioFim = reserva.horarioFim.toISOString().split("T")[1].split(".")[0];
-  }
-
-  return reserva;
-}
 
 
